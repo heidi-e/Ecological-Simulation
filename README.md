@@ -1,2 +1,1 @@
-# Ecological-Simulation
-# HW_5
+# HW_5 - Ecological-Simulation

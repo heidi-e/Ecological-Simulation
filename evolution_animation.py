@@ -5,6 +5,7 @@ import numpy as np
 import copy
 import seaborn as sns
 from collections import defaultdict
+import matplotlib.colors as colors
 
 SIZE = 500  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
@@ -98,8 +99,9 @@ class Field:
 
         for val in ITEM[2:]:
             for animal in self.animals[val]:
-                animal.eat(self.field[animal.x, animal.y])
-                self.field[animal.x, animal.y] = 0
+                if self.field[animal.x, animal.y] == animal.eats[0]:
+                    animal.eat(self.field[animal.x, animal.y])
+                    self.field[animal.x, animal.y] = 0
 
 
     def survive(self):
@@ -107,11 +109,7 @@ class Field:
 
         for val in ITEM[2:]:
             self.animals[val] = [a for a in self.animals[val] if (a.eaten <= a.starve) and not a.dead]
-            """for animal in self.animals[val]:
-                animal = [r for r in animal if r.eaten > animal.starve]
-                
-                self.animals[animal.kind].append(animal)
-"""
+
 
     def reproduce(self):
         """ Rabbits reproduce like rabbits. """
@@ -121,10 +119,9 @@ class Field:
                 for _ in range(rnd.randint(1, animal.max_offspring)):
                     born.append(animal.reproduce())
 
+            self.animals[val] += born
             # Capture field state for historical tracking
-            #self.history[animal].append(self.num_animals())
-
-            self.animal += born
+            #self.history[self.animals[val]].append(self.num_animals())
 
 
     def grow(self):
@@ -160,20 +157,22 @@ class Field:
     def history(self, showTrack=True, showPercentage=True, marker='.'):
 
         plt.figure(figsize=(6, 6))
-        plt.xlabel("# Rabbits")
-        plt.ylabel("# Grass")
+        plt.xlabel("generation #")
+        plt.ylabel("% population")
 
-        xs = self.nrabbits[:]
-        if showPercentage:
-            maxrabbit = max(xs)
-            xs = [x / maxrabbit for x in xs]
-            plt.xlabel("% Rabbits")
+        for val in ITEM[1:]:
+            for animal in self.history[val]:
+                xs = self.animal[:]
+                if showPercentage:
+                    max_animal = max(xs)
+                    xs = [x / max_animal for x in xs]
+                    plt.xlabel("generation #")
 
-        ys = self.ngrass[:]
-        if showPercentage:
-            maxgrass = max(ys)
-            ys = [y / maxgrass for y in ys]
-            plt.ylabel("% Rabbits")
+                ys = self.ngrass[:]
+                if showPercentage:
+                    maxgrass = max(ys)
+                    ys = [y / maxgrass for y in ys]
+                    plt.ylabel("% population")
 
         if showTrack:
             plt.plot(xs, ys, marker=marker)
@@ -183,6 +182,7 @@ class Field:
         plt.grid()
 
         plt.title("Rabbits vs. Grass: GROW_RATE =" + str(GRASS_RATE))
+        plt.legend(['rabbits', 'foxes'])
         plt.savefig("history.png", bbox_inches='tight')
         plt.show()
 
@@ -226,6 +226,10 @@ def main():
     for _ in range(50):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=10, eats=(2,)))
 
+    """clist = ['green', 'blue', 'red']
+    my_cmap = colors.ListedColormap(clist)
+
+    plt.imshow(total, cmap=my_cmap, interpolation='none')"""
 
 
     array = np.ones(shape=(SIZE, SIZE), dtype=int)

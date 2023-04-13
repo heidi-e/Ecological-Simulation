@@ -128,7 +128,7 @@ class Field:
                     for _ in range(rnd.randint(1, animal.max_offspring)):
                         born.append(animal.reproduce())
 
-                self.animals[val] += born
+                self.animals[val].extend(born)
                 # Capture field state for historical tracking
                 self.history[val].append(self.num_animals())
 
@@ -249,7 +249,7 @@ def main():
 
     array = np.ones(shape=(SIZE, SIZE), dtype=int)
     fig = plt.figure(figsize=(5, 5))
-    im = plt.imshow(array, cmap=my_cmap, interpolation='hamming', aspect='auto', vmin=0, vmax=1)
+    im = plt.imshow(array, cmap=my_cmap, interpolation='none', aspect='auto', vmin=0, vmax=1)
     anim = animation.FuncAnimation(fig, animate, fargs=(field, im,), frames=1000000, interval=1, repeat=True)
     plt.show()
 

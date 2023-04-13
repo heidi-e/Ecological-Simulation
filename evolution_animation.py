@@ -114,16 +114,19 @@ class Field:
     def reproduce(self):
         """ Rabbits reproduce like rabbits. """
         born = []
-        for val in ITEM[1:]:
+        for val in ITEM[2:]:
             for animal in self.animals[val]:
                 for _ in range(rnd.randint(1, animal.max_offspring)):
                     born.append(animal.reproduce())
 
             self.animals[val] += born
             # Capture field state for historical tracking
-            #self.history[self.animals[val]].append(self.num_animals())
+            self.history[val].append(self.num_animals())
 
 
+            # Capture field state for historical tracking
+            #self.nrabbits.append(self.num_rabbits())
+            #self.ngrass.append(self.amount_of_grass())
     def grow(self):
         """ Grass grows back with some probability """
         growloc = (np.random.rand(SIZE, SIZE) < GRASS_RATE) * 1
@@ -139,9 +142,8 @@ class Field:
 
     def num_animals(self):
         """ How many rabbits are there in the field ? """
-        for val in ITEM[1:]:
-            for animal in self.animals[val]:
-                return len(animal)
+        for val in ITEM[2:]:
+            return len(self.animals[val])
 
     def amount_of_grass(self):
         return self.field.sum()

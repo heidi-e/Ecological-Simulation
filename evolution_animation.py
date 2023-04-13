@@ -99,18 +99,19 @@ class Field:
         foxes eat rabbits (if they find rabbits where they are) """
 
         # account for the rabbits eating habits
-        for animal in self.animals[2]:
-            if self.field[animal.x, animal.y] == animal.eats[0]:
-                animal.eat(self.field[animal.x, animal.y])
-                self.field[animal.x, animal.y] = 0
+        for val in ITEM[2:]:
+            for animal in self.animals[val]:
+                if self.field[animal.x, animal.y] == animal.eats[0]:
+                    animal.eat(self.field[animal.x, animal.y])
+                    self.field[animal.x, animal.y] = 0
 
-            # account for foxes eating habits
-            for fox in self.animals[3]:
-                if (fox.x == animal.x) and (fox.y == animal.y):
-                    fox.eat(animal)
-                    self.animals[2].remove(animal)
-                    del animal
-                    break
+        ''' # account for foxes eating habits
+                    for fox in self.animals[3]:
+                        if (fox.x == animal.x) and (fox.y == animal.y):
+                            fox.eat(animal)
+                            self.animals[2].remove(animal)
+                            del animal
+                            break'''
 
     def survive(self):
         """ Rabbits who eat some grass live to eat another day """
@@ -124,7 +125,7 @@ class Field:
         born = []
         for val in ITEM[2:]:
             for animal in self.animals[val]:
-                if animal.last_eaten > 0:
+                if animal.last_eaten == 1:
                     for _ in range(rnd.randint(1, animal.max_offspring)):
                         born.append(animal.reproduce())
 

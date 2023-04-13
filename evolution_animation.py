@@ -6,7 +6,7 @@ import copy
 import seaborn as sns
 from collections import defaultdict
 import matplotlib.colors as colors
-
+import pprint as pp
 SIZE = 500  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = 0.025  # Probability that grass grows back at any location in the next season.
@@ -87,6 +87,7 @@ class Field:
         self.animals[animal.kind].append(animal)
 
 
+
     def move(self):
         """ Move the animal """
         for val in ITEM[2:]:
@@ -97,12 +98,19 @@ class Field:
         """ Rabbits eat grass (if they find grass where they are),
         foxes eat rabbits (if they find rabbits where they are) """
 
-        for val in ITEM[2:]:
-            for animal in self.animals[val]:
-                if self.field[animal.x, animal.y] == animal.eats[0]:
-                    animal.eat(self.field[animal.x, animal.y])
-                    self.field[animal.x, animal.y] = 0
+        # account for the rabbits eating habits
+        for animal in self.animals[2]:
+            if self.field[animal.x, animal.y] == animal.eats[0]:
+                animal.eat(self.field[animal.x, animal.y])
+                self.field[animal.x, animal.y] = 0
 
+            # account for foxes eating habits
+            for fox in self.animals[3]:
+                if (fox.x == animal.x) and (fox.y == animal.y):
+                    fox.eat(animal)
+                    self.animals[2].remove(animal)
+                    del animal
+                    break
 
     def survive(self):
         """ Rabbits who eat some grass live to eat another day """
@@ -116,12 +124,13 @@ class Field:
         born = []
         for val in ITEM[2:]:
             for animal in self.animals[val]:
-                for _ in range(rnd.randint(1, animal.max_offspring)):
-                    born.append(animal.reproduce())
+                if animal.last_eaten > 0:
+                    for _ in range(rnd.randint(1, animal.max_offspring)):
+                        born.append(animal.reproduce())
 
-            self.animals[val] += born
-            # Capture field state for historical tracking
-            self.history[val].append(self.num_animals())
+                self.animals[val] += born
+                # Capture field state for historical tracking
+                self.history[val].append(self.num_animals())
 
 
             # Capture field state for historical tracking
@@ -135,7 +144,7 @@ class Field:
     def get_animals(self):
         all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
 
-        for val in ITEM[1:]:
+        for val in ITEM[2:]:
             for r in self.animals[val]:
                 all_animals[r.x, r.y] = 1
                 return all_animals
@@ -155,6 +164,8 @@ class Field:
         self.survive()
         self.reproduce()
         self.grow()
+
+
 """
     def history(self, showTrack=True, showPercentage=True, marker='.'):
 
@@ -228,15 +239,17 @@ def main():
     for _ in range(50):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=10, eats=(2,)))
 
-    """clist = ['green', 'blue', 'red']
+    #pp.pprint(field.animals[3][0].eaten)
+    #print(len(field.animals))
+    clist = ['blue', 'red', 'green']
     my_cmap = colors.ListedColormap(clist)
 
-    plt.imshow(total, cmap=my_cmap, interpolation='none')"""
+    #plt.imshow(total, cmap=my_cmap, interpolation='none')
 
 
     array = np.ones(shape=(SIZE, SIZE), dtype=int)
     fig = plt.figure(figsize=(5, 5))
-    im = plt.imshow(array, cmap='PiYG', interpolation='hamming', aspect='auto', vmin=0, vmax=1)
+    im = plt.imshow(array, cmap=my_cmap, interpolation='hamming', aspect='auto', vmin=0, vmax=1)
     anim = animation.FuncAnimation(fig, animate, fargs=(field, im,), frames=1000000, interval=1, repeat=True)
     plt.show()
 

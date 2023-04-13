@@ -1,3 +1,12 @@
+"""
+Heidi Eren, Conor Doyle, Olivia Mintz, Kelsey Nihezagirwe
+DS3500 HW 5
+Evolution Animation
+
+"""
+
+
+
 import random as rnd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation

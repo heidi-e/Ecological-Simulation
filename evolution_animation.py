@@ -14,7 +14,7 @@ from collections import defaultdict
 import matplotlib.colors as colors
 import pprint as pp
 
-SIZE = 100  # The dimensions of the field
+SIZE = 50  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
@@ -22,6 +22,7 @@ ITEM = [0,1,2,3]
 TYPE = ['empty', 'grass', 'rabbit', 'fox']
 SPEED = 1
 
+WHOLE_FIELD = []
 
 # parameters
 # max_offspring, speed, how long they go without eating, what the animal can eat
@@ -123,8 +124,6 @@ class Field:
             self.location[val] = self.get_animals(val)
 
 
-
-
     def eat(self):
         """ Rabbits eat grass (if they find grass where they are),
         foxes eat rabbits (if they find rabbits where they are) """
@@ -204,9 +203,10 @@ class Field:
             print(val,":", len(self.animals[val]))
             # Capture field state for historical tracking
 
+        # update the amount of grass in the field
         self.history[1].append(self.amount_of_grass())
 
-
+        # update the number of animals in the field
         for val in ITEM[2:]:
             self.history[val].append(self.num_animals(val))
 
@@ -261,48 +261,161 @@ class Field:
             self.reproduce()
             self.grow()
 
-    def history(self, showTrack=True, showPercentage=True, marker='.'):
+    def history_graph(self, showTrack=True, showPercentage=True, marker='.'):
+
+        rabbit_count = []
+        fox_count = []
+        grass_count = []
+        empty_count = []
+
+        for k in range(len(self.history)):
+            rabbit_count.append(self.history[k][2])
+            fox_count.append(self.history[k][3])
+            grass_count.append(self.history[k][1])
+            empty_count.append(SIZE ** 2 - sum(self.history[k][1:]) - rabbit_count[k] - fox_count[k])
+
+        plt.plot(rabbit_count, label='Rabbits')
+        plt.plot(fox_count, label='Foxes')
+        plt.plot(grass_count, label='Grass')
+        plt.plot(empty_count, label='Empty')
+
+        plt.legend()
+        plt.xlabel('Time')
+        plt.ylabel('Number of animals/spaces')
+        plt.title('Population dynamics over time')
+        plt.show()
+
+
         plt.figure(figsize=(6, 6))
         plt.xlabel("generation #")
         plt.ylabel("% population")
         for val in ITEM[2:]:
             for animal in self.history[val]:
-                xs = self.animal[:]
+                xs = animal[:]
                 if showPercentage:
                     max_animal = max(xs)
                     xs = [x / max_animal for x in xs]
                     plt.xlabel("generation #")
-                ys = self.ngrass[:]
-                if showPercentage:
-                    maxgrass = max(ys)
-                    ys = [y / maxgrass for y in ys]
-                    plt.ylabel("% population")
+
+        ys = self.history[1]
+        if showPercentage:
+            maxgrass = max(ys)
+            ys = [y / maxgrass for y in ys]
+            plt.ylabel("% population")
+
         if showTrack:
             plt.plot(xs, ys, marker=marker)
         else:
             plt.scatter(xs, ys, marker=marker)
         plt.grid()
-        plt.title("Rabbits vs. Grass: GROW_RATE =" + str(GRASS_RATE))
-        plt.legend(['rabbits', 'foxes'])
+        plt.title("Animals vs. Grass: GROW_RATE =" + str(GRASS_RATE))
+        plt.legend(TYPE)
         plt.savefig("history.png", bbox_inches='tight')
         plt.show()
-"""
-    def history2(self):
-        xs = self.nrabbits[:]
-        ys = self.ngrass[:]
-        sns.set_style('dark')
-        f, ax = plt.subplots(figsize=(7, 6))
-        sns.scatterplot(x=xs, y=ys, s=5, color=".15")
-        sns.histplot(x=xs, y=ys, bins=50, pthresh=.1, cmap="mako")
-        sns.kdeplot(x=xs, y=ys, levels=5, color="r", linewidths=1)
-        plt.grid()
-        plt.xlim(0, max(xs) * 1.2)
+    def history1(self, showTrack=True, showPercentage=True, marker='.'):
+
+
+        nrabbits = self.history[2]
+        nfoxes = self.history[3]
+        ngrass = self.history[1]
+
+        plt.figure(figsize=(6, 6))
         plt.xlabel("# Rabbits")
         plt.ylabel("# Grass")
-        plt.title("Rabbits vs. Grass: GROW_RATE =" + str(GRASS_RATE))
+
+        xs = nrabbits[:]
+        if showPercentage:
+            maxrabbit = max(xs)
+            xs = [x / maxrabbit for x in xs]
+            plt.xlabel("% Rabbits")
+
+        ys = ngrass[:]
+        if showPercentage:
+            maxgrass = max(ys)
+            ys = [y / maxgrass for y in ys]
+            plt.ylabel("% Rabbits")
+
+        # Add data for foxes
+        zs = nfoxes[:]
+        if showPercentage:
+            maxfox = max(zs)
+            zs = [z / maxfox for z in zs]
+            plt.ylabel("% Foxes")
+
+        if showTrack:
+            plt.plot(xs, ys, marker=marker, label='Rabbits')
+            plt.plot(xs, zs, marker=marker, label='Foxes')
+        else:
+            plt.scatter(xs, ys, marker=marker, label='Rabbits')
+            plt.scatter(xs, zs, marker=marker, label='Foxes')
+
+        plt.grid()
+
+        plt.title("Rabbits vs. Foxes: GROW_RATE =" + str(GRASS_RATE))
+        plt.legend()
+        plt.savefig("history.png", bbox_inches='tight')
+        plt.show()
+
+
+    def history2(self):
+
+        xs = self.history[2]
+        ys = self.history[1]
+        zs = self.history[3]
+
+        sns.set_style('dark')
+        f, ax = plt.subplots(figsize=(7, 6))
+        sns.scatterplot(x=xs, y=ys, s=5, color=".15", label="Grass")
+        sns.histplot(x=xs, y=ys, bins=50, pthresh=.1, cmap="mako")
+        sns.kdeplot(x=xs, y=ys, levels=5, color="r", linewidths=1, label="Rabbits")
+        sns.scatterplot(x=xs, y=zs, s=5, color="b", label="Foxes")
+        plt.grid()
+        plt.xlim(0, max(xs) * 1.2)
+        plt.xlabel("# Rabbits/Foxes")
+        plt.ylabel("# Grass")
+        plt.title("Rabbits and Foxes vs. Grass: GROW_RATE =" + str(GRASS_RATE))
+        plt.legend(loc="upper left")
         plt.savefig("history2.png", bbox_inches='tight')
         plt.show()
-"""
+
+    def plot_populations(self, showPercentage=True):
+        """ Plots the population of rabbits, foxes, and grass over time """
+
+        rabbits = self.history[2]
+        grass = self.history[1]
+        foxes = self.history[3]
+        time = list(range(1,len(rabbits)+1))
+
+        xs = rabbits[:]
+        if showPercentage:
+            maxrabbit = max(xs)
+            xs = [x / maxrabbit for x in xs]
+            # plot the lines
+            plt.plot(time, xs, label='rabbit')
+
+        ys = grass[:]
+        if showPercentage:
+            maxgrass = max(ys)
+            ys = [x / maxgrass for x in ys]
+            # plot the lines
+            plt.plot(time, ys, label='grass')
+
+        zs = foxes[:]
+        if showPercentage:
+            maxfoxes = max(zs)
+            zs = [x / maxfoxes for x in zs]
+            # plot the lines
+            plt.plot(time, zs, label='foxes')
+
+
+        # add title and labels for axes
+        plt.title('Three Lines')
+        plt.xlabel('X-axis')
+        plt.ylabel('Y-axis')
+
+        # add legend and show the plot
+        plt.legend()
+        plt.show()
 
 def animate(i, field, im):
 
@@ -330,7 +443,7 @@ def main():
         field.add_animal(Animal(2, max_offspring=2, speed=1, starve=0, eats=(1,)))
 
     # create foxes
-    for _ in range(10):
+    for _ in range(5):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=30, eats=(2,)))
 
     clist = ['tan','green', 'blue', 'red']
@@ -348,8 +461,12 @@ def main():
     #pp.pprint(field.array)
     plt.show()
 
-    #field.history()
+    pp.pprint(field.history)
+    field.history1()
+
     #field.history2()
+
+    field.plot_populations()
 
 
 if __name__ == '__main__':

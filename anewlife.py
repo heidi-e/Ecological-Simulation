@@ -243,13 +243,25 @@ class Field:
         plt.savefig("history2.png", bbox_inches='tight')
         plt.show()
 
-
+def animate(i, field, im):
+    field.generation()
+    #print("AFTER: ", i, np.sum(field.field), len(field.rabbits))
+    total = field.field.copy()
+    for rabbit in field.rabbits:
+        total[rabbit.x, rabbit.y] = 2
+    for fox in field.foxes:
+        total[fox.x, fox.y] = 3
+    #print(total)
+    im.set_array(total)
+    plt.title("generation = " + str(i))
+    return im,
+"""
 def animate(i, field, im):
     field.generation()
     # print("AFTER: ", i, np.sum(field.field), len(field.rabbits))
     im.set_array(field.field)
     plt.title("generation = " + str(i))
-    return im,
+    return im,"""
 
 
 def main():

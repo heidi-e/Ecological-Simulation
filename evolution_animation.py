@@ -16,7 +16,7 @@ from collections import defaultdict
 import matplotlib.colors as colors
 import pprint as pp
 
-SIZE = 15  # The dimensions of the field
+SIZE = 100  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
@@ -64,11 +64,11 @@ class Animal:
         self.eaten += amount
 
         if amount == 0:
-            #print("didn't eat at all")
+
             self.last_eaten += 1
         else:
             self.last_eaten = 0
-            #print("We eating good")
+
 
         # keep track of how many times animal last ate
 
@@ -111,11 +111,7 @@ class Field:
             for r in self.animals[val]:
                 r.move()
 
-        for val in ITEM[2:]:
-            for r in self.animals[val]:
-                """print("x", r.x)
-                print("y", r.y)
-                print(val)"""
+
 
     def eat(self):
         """ Rabbits eat grass (if they find grass where they are),
@@ -126,10 +122,12 @@ class Field:
 
             if self.field[animal.x, animal.y] == animal.eats[0]:
                 animal.eat(self.field[animal.x, animal.y])
+                print('rabbits are munching')
                 self.field[animal.x, animal.y] = 0
+
             else:
-                print("didn;t eat this time!")
                 animal.eat(self.field[animal.x, animal.y])
+                animal.dead = True
 
     # account for foxes eating habits
             for fox in self.animals[3]:
@@ -137,7 +135,6 @@ class Field:
                     fox.eat(1)
                     animal.dead = True
                 else:
-                    print("didn;t eat this time! FOX")
                     fox.eat(0)
 
 
@@ -155,25 +152,17 @@ class Field:
 
         born = []
         for val in ITEM[2:]:
-
-
             for animal in self.animals[val]:
 
                 if animal.last_eaten <= animal.starve:
                     # check if animal has eaten in the current cycle
                     if animal.eaten > 0:
                         for _ in range(rnd.randint(1, animal.max_offspring)):
-
                             born.append(animal.reproduce())
-                    else:
-
-                        pass
-                else:
-                    pass
 
             self.animals[val] += born
             born = []  # reset the list for the next animal type
-            print(len(self.animals[val]))
+            print(val,":", len(self.animals[val]))
             # Capture field state for historical tracking
             self.history[val].append(self.num_animals())
 
@@ -187,7 +176,7 @@ class Field:
         self.field = np.maximum(self.field, growloc)
 
     def get_animals(self):
-        all_animals = self.field
+        all_animals = np.ones(shape=(SIZE, SIZE), dtype=int)
 
 
         #print(all_animals)
@@ -199,7 +188,7 @@ class Field:
 
                 all_animals[r.x, r.y] = val
 
-        print(f"Get_anmials one", all_animals)
+
         return all_animals
 
     def num_animals(self):
@@ -214,89 +203,18 @@ class Field:
         """ Run one generation of rabbits """
         #print(all_animals)
         #print("before we move")
-        all_animals = self.field
 
-        #print(all_animals)
-
-
-        #pp.pprint(self.animals)
-
-        for val in ITEM[2:]:
-            for r in self.animals[val]:
-                all_animals[r.x, r.y] = val
-
-        print(all_animals)
         self.move()
-        print("before we eat")
-        all_animals = self.field
-
-        #print(all_animals)
-
-        #pp.pprint(self.animals)
-
-        for val in ITEM[2:]:
-            for r in self.animals[val]:
-                all_animals[r.x, r.y] = val
-
-        print(all_animals)
         self.eat()
-        print("before we survive")
-        all_animals = self.field
-
-        #print(all_animals)
-
-        #pp.pprint(self.animals)
-
-        for val in ITEM[2:]:
-            for r in self.animals[val]:
-                all_animals[r.x, r.y] = val
-
-        print(all_animals)
         self.survive()
-        print("before we reproduce")
-        all_animals = self.field
-
-        #print(all_animals)
-
-        #pp.pprint(self.animals)
-
-        for val in ITEM[2:]:
-            for r in self.animals[val]:
-                all_animals[r.x, r.y] = val
-
-        print(all_animals)
         self.reproduce()
-        print("before we grow")
-        all_animals = self.field
-
-        #print(all_animals)
-
-        #pp.pprint(self.animals)
-
-        for val in ITEM[2:]:
-            for r in self.animals[val]:
-                all_animals[r.x, r.y] = val
-
-        print(all_animals)
         self.grow()
-        print("final thing")
-        all_animals = self.field
 
-        #print(all_animals)
-
-        #pp.pprint(self.animals)
-
-        for val in ITEM[2:]:
-            for r in self.animals[val]:
-                all_animals[r.x, r.y] = val
-
-        print(all_animals)
-"""
     def history(self, showTrack=True, showPercentage=True, marker='.'):
         plt.figure(figsize=(6, 6))
         plt.xlabel("generation #")
         plt.ylabel("% population")
-        for val in ITEM[1:]:
+        for val in ITEM[2:]:
             for animal in self.history[val]:
                 xs = self.animal[:]
                 if showPercentage:
@@ -317,6 +235,7 @@ class Field:
         plt.legend(['rabbits', 'foxes'])
         plt.savefig("history.png", bbox_inches='tight')
         plt.show()
+"""
     def history2(self):
         xs = self.nrabbits[:]
         ys = self.ngrass[:]
@@ -357,7 +276,7 @@ def main():
     for _ in range(1):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=10, eats=(2,)))
 
-    clist = ['black','green', 'blue', 'red']
+    clist = ['tan','green', 'blue', 'red']
     my_cmap = colors.ListedColormap(clist)
 
     "plt.imshow(total, cmap=my_cmap, interpolation='none')"

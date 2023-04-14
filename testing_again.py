@@ -122,9 +122,8 @@ class Field:
                 animal.eat(self.field[animal.x, animal.y])
                 self.field[animal.x, animal.y] = 0
 
-
-        # account for foxes eating habits
-            for fox in self.animals[3]:
+        for fox in self.animals[3]:
+            for animal in self.animals[2]:
                 if (fox.x == animal.x) and (fox.y == animal.y):
                     fox.eat(1)
                     animal.dead = True
@@ -136,9 +135,9 @@ class Field:
         for val in ITEM[2:]:
             self.animals[val] = [a for a in self.animals[val] if (a.eaten <= a.starve) and not a.dead]
 
-
     def reproduce(self):
         """ Rabbits reproduce like rabbits. """
+
         born = []
         for val in ITEM[2:]:
             for animal in self.animals[val]:
@@ -146,13 +145,21 @@ class Field:
                     born.append(animal.reproduce())
 
             self.animals[val] += born
+
+            born = []
             # Capture field state for historical tracking
-            #self.history[val].append(self.num_animals())
+            self.history[val].append(self.num_animals(val))
 
 
             # Capture field state for historical tracking
             #self.nrabbits.append(self.num_rabbits())
             #self.ngrass.append(self.amount_of_grass())
+
+    def update_history(self):
+        """Update the simulation history after a time step."""
+        for animal_kind in self.animals.keys():
+            self.history[animal_kind].append(len(self.animals[animal_kind]))
+
     def grow(self):
         """ Grass grows back with some probability """
         growloc = (np.random.rand(SIZE, SIZE) < GRASS_RATE) * 1
@@ -161,26 +168,39 @@ class Field:
     def get_animals(self):
         all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
 
-        for val in ITEM[2:]:
+        for val in ITEM[1:]:
             for r in self.animals[val]:
                 all_animals[r.x, r.y] = val
         return all_animals
 
-    def num_animals(self):
-        """ How many rabbits are there in the field ? """
-        for val in ITEM[2:]:
+    def num_animals(self, val=None):
+        """ Return the number of animals in the field """
+        if val is not None:
             return len(self.animals[val])
+        else:
+            return sum([len(self.animals[val]) for val in ITEM[2:]])
+
 
     def amount_of_grass(self):
         return self.field.sum()
 
+    def grow_grass(self):
+        """ Randomly set some locations on the field to contain grass """
+        for i in range(SIZE):
+            for j in range(SIZE):
+                if rnd.random() < GRASS_RATE:
+                    self.field[i, j] = 1
+
     def generation(self):
         """ Run one generation of rabbits """
+        self.grow()
         self.move()
         self.eat()
         self.survive()
         self.reproduce()
-        self.grow()
+
+        self.grow_grass()
+        self.update_history()
 """
     def history(self, showTrack=True, showPercentage=True, marker='.'):
 
@@ -247,11 +267,11 @@ def main():
     field = Field()
 
     # create rabbits
-    for _ in range(5):
+    for _ in range(20):
         field.add_animal(Animal(2, max_offspring=3, speed=1, starve=0, eats=(1,)))
 
     # create foxes
-    for _ in range(1):
+    for _ in range(5):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=10, eats=(2,)))
 
 

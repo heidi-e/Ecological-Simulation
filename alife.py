@@ -108,30 +108,10 @@ class Field:
         """ Run one generation of rabbits """
 
         self.move()
-        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
-        for r in self.rabbits:
-            rabbits[r.x, r.y] = 1
-        print(rabbits)
         self.eat()
-        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
-        for r in self.rabbits:
-            rabbits[r.x, r.y] = 1
-        print(rabbits)
         self.survive()
-        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
-        for r in self.rabbits:
-            rabbits[r.x, r.y] = 1
-        print(rabbits)
         self.reproduce()
-        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
-        for r in self.rabbits:
-            rabbits[r.x, r.y] = 1
-        print(rabbits)
         self.grow()
-        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
-        for r in self.rabbits:
-            rabbits[r.x, r.y] = 1
-        print(rabbits)
 
     def history(self, showTrack=True, showPercentage=True, marker='.'):
 

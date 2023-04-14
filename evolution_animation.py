@@ -16,7 +16,7 @@ from collections import defaultdict
 import matplotlib.colors as colors
 import pprint as pp
 
-SIZE = 15  # The dimensions of the field
+SIZE = 50  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
@@ -137,20 +137,28 @@ class Field:
 
     def reproduce(self):
         """ Rabbits reproduce like rabbits. """
+
         born = []
-
-
         for val in ITEM[2:]:
             print(val)
             print(len(self.animals[val]))
             for animal in self.animals[val]:
+                print("Hello",val)
+                print(f"last eaten {animal.last_eaten}")
+                print(f"starve {animal.starve}")
+                if animal.last_eaten <= animal.starve:
+                    # check if animal has eaten in the current cycle
+                    if animal.eaten > 0:
+                        for _ in range(rnd.randint(1, animal.max_offspring)):
+                            print("did reproduce!")
+                            born.append(animal.reproduce())
+                    else:
+                        print("Animal did not reproduce because it did not eat.")
+                else:
+                    print("Animal did not reproduce because it is starving.")
 
-                print(val)
-                for _ in range(rnd.randint(1, animal.max_offspring)):
-                    born.append(animal.reproduce())
-
-            print(val)
             self.animals[val] += born
+            born = []  # reset the list for the next animal type
             print(len(self.animals[val]))
             # Capture field state for historical tracking
             self.history[val].append(self.num_animals())
@@ -195,6 +203,7 @@ class Field:
         all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
 
         #print(all_animals)
+
 
         #pp.pprint(self.animals)
 
@@ -327,11 +336,11 @@ def main():
     field = Field()
 
     # create rabbits
-    for _ in range(50):
+    for _ in range(10):
         field.add_animal(Animal(2, max_offspring=2, speed=1, starve=0, eats=(1,)))
 
     # create foxes
-    for _ in range(50):
+    for _ in range(3):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=10, eats=(2,)))
 
     clist = ['black','green', 'blue', 'red']

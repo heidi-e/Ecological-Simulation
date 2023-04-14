@@ -2,7 +2,6 @@
 Heidi Eren, Conor Doyle, Olivia Mintz, Kelsey Nihezagirwe
 DS3500 HW 5
 Evolution Animation
-
 """
 
 
@@ -15,9 +14,8 @@ import copy
 import seaborn as sns
 from collections import defaultdict
 import matplotlib.colors as colors
-import pprint as pp
 
-SIZE = 50  # The dimensions of the field
+SIZE = 5  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
@@ -70,21 +68,13 @@ class Animal:
     def move(self):
         """ Move up, down, left, right randomly """
 
-        """self.x = (self.x + rnd.choice([-self.speed, self.speed]))
-        self.y = (self.y + rnd.choice([-self.speed, self.speed]))
-        if WRAP:
-            self.x = self.x % SIZE
-            self.y = self.y % SIZE
-        else:
-            self.x = min(SIZE - 1, max(0, self.x))
-            self.y = min(SIZE - 1, max(0, self.y))"""
-
         if WRAP:
             self.x = (self.x + rnd.choice([-self.speed, self.speed])) % SIZE
             self.y = (self.y + rnd.choice([-self.speed, self.speed])) % SIZE
         else:
             self.x = min(SIZE - 1, max(0, (self.x + rnd.choice([-self.speed, self.speed]))))
             self.y = min(SIZE - 1, max(0, (self.y + rnd.choice([-self.speed, self.speed]))))
+
 
 
 class Field:
@@ -104,30 +94,29 @@ class Field:
         """ A new animal is added to the field """
         self.animals[animal.kind].append(animal)
 
+
     def move(self):
         """ Move the animal """
         for val in ITEM[2:]:
             for r in self.animals[val]:
                 r.move()
 
-    def die(self):
-        self.dead = True
-
     def eat(self):
         """ Rabbits eat grass (if they find grass where they are),
         foxes eat rabbits (if they find rabbits where they are) """
 
-        for animal in self.animals[2]:
-            if self.field[animal.x, animal.y] == animal.eats[0]:
-                animal.eat(self.field[animal.x, animal.y])
-                self.field[animal.x, animal.y] = 0
+        for val in ITEM[2:]:
+            for animal in self.animals[val]:
+                if self.field[animal.x, animal.y] == animal.eats[0]:
+                    animal.eat(self.field[animal.x, animal.y])
+                    self.field[animal.x, animal.y] = 0
 
         # account for foxes eating habits
-            for fox in self.animals[3]:
-                if (fox.x == animal.x) and (fox.y == animal.y):
-                    fox.eat(1)
-                    animal.dead = True
-                    break
+                for fox in self.animals[3]:
+                    if (fox.x == animal.x) and (fox.y == animal.y):
+                        fox.eat(1)
+                        self.animals[2].remove(animal)
+                        break
 
     def survive(self):
         """ Rabbits who eat some grass live to eat another day """
@@ -146,7 +135,7 @@ class Field:
 
             self.animals[val] += born
             # Capture field state for historical tracking
-            #self.history[val].append(self.num_animals())
+            self.history[val].append(self.num_animals())
 
 
             # Capture field state for historical tracking
@@ -160,7 +149,7 @@ class Field:
     def get_animals(self):
         all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
 
-        for val in ITEM[2:]:
+        for val in ITEM[1:]:
             for r in self.animals[val]:
                 all_animals[r.x, r.y] = val
         return all_animals
@@ -182,11 +171,9 @@ class Field:
         self.grow()
 """
     def history(self, showTrack=True, showPercentage=True, marker='.'):
-
         plt.figure(figsize=(6, 6))
         plt.xlabel("generation #")
         plt.ylabel("% population")
-
         for val in ITEM[1:]:
             for animal in self.history[val]:
                 xs = self.animal[:]
@@ -194,38 +181,30 @@ class Field:
                     max_animal = max(xs)
                     xs = [x / max_animal for x in xs]
                     plt.xlabel("generation #")
-
                 ys = self.ngrass[:]
                 if showPercentage:
                     maxgrass = max(ys)
                     ys = [y / maxgrass for y in ys]
                     plt.ylabel("% population")
-
         if showTrack:
             plt.plot(xs, ys, marker=marker)
         else:
             plt.scatter(xs, ys, marker=marker)
-
         plt.grid()
-
         plt.title("Rabbits vs. Grass: GROW_RATE =" + str(GRASS_RATE))
         plt.legend(['rabbits', 'foxes'])
         plt.savefig("history.png", bbox_inches='tight')
         plt.show()
-
     def history2(self):
         xs = self.nrabbits[:]
         ys = self.ngrass[:]
-
         sns.set_style('dark')
         f, ax = plt.subplots(figsize=(7, 6))
-
         sns.scatterplot(x=xs, y=ys, s=5, color=".15")
         sns.histplot(x=xs, y=ys, bins=50, pthresh=.1, cmap="mako")
         sns.kdeplot(x=xs, y=ys, levels=5, color="r", linewidths=1)
         plt.grid()
         plt.xlim(0, max(xs) * 1.2)
-
         plt.xlabel("# Rabbits")
         plt.ylabel("# Grass")
         plt.title("Rabbits vs. Grass: GROW_RATE =" + str(GRASS_RATE))
@@ -247,14 +226,11 @@ def main():
 
     # create rabbits
     for _ in range(5):
-        field.add_animal(Animal(2, max_offspring=3, speed=1, starve=0, eats=(1,)))
+        field.add_animal(Animal(2, max_offspring=2, speed=1, starve=0, eats=(1,)))
 
     # create foxes
     for _ in range(1):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=10, eats=(2,)))
-
-
-    pp.pprint(field.history)
 
     clist = ['black','green', 'blue', 'red']
     my_cmap = colors.ListedColormap(clist)
@@ -278,16 +254,12 @@ if __name__ == '__main__':
 
 """
 def main():
-
     # Create the ecosystem
     field = Field()
     for _ in range(10):
         field.add_rabbit(Rabbit())
-
-
     # Run the world
     gen = 0
-
     while gen < 500:
         field.display(gen)
         if gen % 100 == 0:
@@ -298,17 +270,8 @@ def main():
         field.reproduce()
         field.grow()
         gen += 1
-
     plt.show()
     field.plot()
-
 if __name__ == '__main__':
     main()
-
-
 """
-
-
-
-
-

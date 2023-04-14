@@ -16,7 +16,7 @@ from collections import defaultdict
 import matplotlib.colors as colors
 import pprint as pp
 
-SIZE = 5  # The dimensions of the field
+SIZE = 15  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
@@ -72,9 +72,11 @@ class Animal:
         if WRAP:
             self.x = (self.x + rnd.choice([-self.speed, self.speed])) % SIZE
             self.y = (self.y + rnd.choice([-self.speed, self.speed])) % SIZE
+            print("Heyyyy")
         else:
             self.x = min(SIZE - 1, max(0, (self.x + rnd.choice([-self.speed, self.speed]))))
             self.y = min(SIZE - 1, max(0, (self.y + rnd.choice([-self.speed, self.speed]))))
+
 
 
 
@@ -102,39 +104,54 @@ class Field:
             for r in self.animals[val]:
                 r.move()
 
+        for val in ITEM[2:]:
+            for r in self.animals[val]:
+                """print("x", r.x)
+                print("y", r.y)
+                print(val)"""
+
     def eat(self):
         """ Rabbits eat grass (if they find grass where they are),
         foxes eat rabbits (if they find rabbits where they are) """
 
-        for val in ITEM[2:]:
-            for animal in self.animals[val]:
-                if self.field[animal.x, animal.y] == animal.eats[0]:
-                    animal.eat(self.field[animal.x, animal.y])
-                    self.field[animal.x, animal.y] = 0
 
-        # account for foxes eating habits
-                for fox in self.animals[3]:
-                    if (fox.x == animal.x) and (fox.y == animal.y):
-                        fox.eat(1)
-                        animal.dead = True
-                        break
+        for animal in self.animals[2]:
+            if self.field[animal.x, animal.y] == animal.eats[0]:
+                animal.eat(self.field[animal.x, animal.y])
+                self.field[animal.x, animal.y] = 0
+
+    # account for foxes eating habits
+            for fox in self.animals[3]:
+                if (fox.x == animal.x) and (fox.y == animal.y):
+                    fox.eat(1)
+                    animal.dead = True
+                    break
+
 
     def survive(self):
         """ Rabbits who eat some grass live to eat another day """
 
         for val in ITEM[2:]:
-            self.animals[val] = [a for a in self.animals[val] if (a.eaten <= a.starve) and not a.dead]
+            self.animals[val] = [a for a in self.animals[val] if (a.last_eaten <= a.starve) and not a.dead]
 
 
     def reproduce(self):
         """ Rabbits reproduce like rabbits. """
         born = []
+
+
         for val in ITEM[2:]:
+            print(val)
+            print(len(self.animals[val]))
             for animal in self.animals[val]:
+
+                print(val)
                 for _ in range(rnd.randint(1, animal.max_offspring)):
                     born.append(animal.reproduce())
 
+            print(val)
             self.animals[val] += born
+            print(len(self.animals[val]))
             # Capture field state for historical tracking
             self.history[val].append(self.num_animals())
 
@@ -150,9 +167,17 @@ class Field:
     def get_animals(self):
         all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
 
+
+        #print(all_animals)
+
+        #pp.pprint(self.animals)
+
         for val in ITEM[2:]:
             for r in self.animals[val]:
+
                 all_animals[r.x, r.y] = val
+
+        print(all_animals)
         return all_animals
 
     def num_animals(self):
@@ -165,11 +190,84 @@ class Field:
 
     def generation(self):
         """ Run one generation of rabbits """
+        #print(all_animals)
+        #print("before we move")
+        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+
+        #print(all_animals)
+
+        #pp.pprint(self.animals)
+
+        for val in ITEM[2:]:
+            for r in self.animals[val]:
+                all_animals[r.x, r.y] = val
+
+        print(all_animals)
         self.move()
+        print("before we eat")
+        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+
+        #print(all_animals)
+
+        #pp.pprint(self.animals)
+
+        for val in ITEM[2:]:
+            for r in self.animals[val]:
+                all_animals[r.x, r.y] = val
+
+        print(all_animals)
         self.eat()
+        print("before we survive")
+        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+
+        #print(all_animals)
+
+        #pp.pprint(self.animals)
+
+        for val in ITEM[2:]:
+            for r in self.animals[val]:
+                all_animals[r.x, r.y] = val
+
+        print(all_animals)
         self.survive()
+        print("before we reproduce")
+        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+
+        #print(all_animals)
+
+        #pp.pprint(self.animals)
+
+        for val in ITEM[2:]:
+            for r in self.animals[val]:
+                all_animals[r.x, r.y] = val
+
+        print(all_animals)
         self.reproduce()
+        print("before we grow")
+        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+
+        #print(all_animals)
+
+        #pp.pprint(self.animals)
+
+        for val in ITEM[2:]:
+            for r in self.animals[val]:
+                all_animals[r.x, r.y] = val
+
+        print(all_animals)
         self.grow()
+        print("final thing")
+        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+
+        #print(all_animals)
+
+        #pp.pprint(self.animals)
+
+        for val in ITEM[2:]:
+            for r in self.animals[val]:
+                all_animals[r.x, r.y] = val
+
+        print(all_animals)
 """
     def history(self, showTrack=True, showPercentage=True, marker='.'):
         plt.figure(figsize=(6, 6))
@@ -216,21 +314,24 @@ class Field:
 def animate(i, field, im):
     field.generation()
     # print("AFTER: ", i, np.sum(field.field), len(field.rabbits))
-    im.set_array(field.get_animals())
+    x = field.get_animals()
+    #print(x)
+    im.set_array(x)
     plt.title("generation = " + str(i))
     return im,
 
 
 def main():
+
     # Create the ecosystem
     field = Field()
 
     # create rabbits
-    for _ in range(5):
+    for _ in range(50):
         field.add_animal(Animal(2, max_offspring=2, speed=1, starve=0, eats=(1,)))
 
     # create foxes
-    for _ in range(1):
+    for _ in range(50):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=10, eats=(2,)))
 
     clist = ['black','green', 'blue', 'red']
@@ -238,13 +339,14 @@ def main():
 
     "plt.imshow(total, cmap=my_cmap, interpolation='none')"
 
-    pp.pprint(field.array)
+    #pp.pprint(field.array)
 
 
     array = np.ones(shape=(SIZE, SIZE), dtype=int)
     fig = plt.figure(figsize=(5, 5))
     im = plt.imshow(array, cmap=my_cmap, interpolation='None', aspect='auto', vmin=0, vmax=3)
     anim = animation.FuncAnimation(fig, animate, fargs=(field, im,), frames=1000000, interval=1, repeat=True)
+    #pp.pprint(field.array)
     plt.show()
 
     #field.history()

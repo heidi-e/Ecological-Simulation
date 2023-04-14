@@ -5,7 +5,7 @@ import numpy as np
 import copy
 import seaborn as sns
 
-SIZE = 500  # The dimensions of the field
+SIZE = 15  # The dimensions of the field
 OFFSPRING = 2  # Max offspring offspring when a rabbit reproduces
 GRASS_RATE = 0.025  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
@@ -106,11 +106,32 @@ class Field:
 
     def generation(self):
         """ Run one generation of rabbits """
+
         self.move()
+        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        for r in self.rabbits:
+            rabbits[r.x, r.y] = 1
+        print(rabbits)
         self.eat()
+        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        for r in self.rabbits:
+            rabbits[r.x, r.y] = 1
+        print(rabbits)
         self.survive()
+        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        for r in self.rabbits:
+            rabbits[r.x, r.y] = 1
+        print(rabbits)
         self.reproduce()
+        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        for r in self.rabbits:
+            rabbits[r.x, r.y] = 1
+        print(rabbits)
         self.grow()
+        rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        for r in self.rabbits:
+            rabbits[r.x, r.y] = 1
+        print(rabbits)
 
     def history(self, showTrack=True, showPercentage=True, marker='.'):
 
@@ -173,7 +194,7 @@ def main():
     # Create the ecosystem
     field = Field()
 
-    for _ in range(1):
+    for _ in range(15):
         field.add_rabbit(Rabbit())
 
     array = np.ones(shape=(SIZE, SIZE), dtype=int)

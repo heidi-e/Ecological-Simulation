@@ -14,6 +14,7 @@ import copy
 import seaborn as sns
 from collections import defaultdict
 import matplotlib.colors as colors
+import pprint as pp
 
 SIZE = 5  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
@@ -115,7 +116,7 @@ class Field:
                 for fox in self.animals[3]:
                     if (fox.x == animal.x) and (fox.y == animal.y):
                         fox.eat(1)
-                        self.animals[2].remove(animal)
+                        animal.dead = True
                         break
 
     def survive(self):
@@ -149,7 +150,7 @@ class Field:
     def get_animals(self):
         all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
 
-        for val in ITEM[1:]:
+        for val in ITEM[2:]:
             for r in self.animals[val]:
                 all_animals[r.x, r.y] = val
         return all_animals
@@ -237,6 +238,7 @@ def main():
 
     "plt.imshow(total, cmap=my_cmap, interpolation='none')"
 
+    pp.pprint(field.array)
 
 
     array = np.ones(shape=(SIZE, SIZE), dtype=int)

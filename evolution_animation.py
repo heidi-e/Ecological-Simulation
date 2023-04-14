@@ -12,11 +12,21 @@ import copy
 import seaborn as sns
 from collections import defaultdict
 import matplotlib.colors as colors
+import argparse
 import pprint as pp
 
-SIZE = 50  # The dimensions of the field
+parser = argparse.ArgumentParser(description='Simulate a rabbit and fox population over time.')
+parser.add_argument('--grass_growth_rate', type=float, default=0.8, help='the rate at which grass grows each turn')
+parser.add_argument('--fox_k_value', type=float, default=30, help='the K value for foxes')
+parser.add_argument('--field_size', type=int, default=50, help='the size of the field')
+parser.add_argument('--initial_rabbits', type=int, default=2, help='the number of rabbits at the start of the simulation')
+parser.add_argument('--initial_foxes', type=int, default=5, help='the number of foxes at the start of the simulation')
+
+args = parser.parse_args()
+
+SIZE = args.field_size  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
-GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
+GRASS_RATE = args.grass_growth_rate  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
 ITEM = [0,1,2,3]
 TYPE = ['empty', 'grass', 'rabbit', 'fox']
@@ -159,6 +169,7 @@ class Field:
                 animal.eat(self.field[animal.x, animal.y])
                 print('rabbits are munching')
                 self.field[animal.x, animal.y] = 0
+                print("field", self.field[animal.x, animal.y])
 
             else:
                 # rabbit has nothing to eat
@@ -439,12 +450,12 @@ def main():
     field = Field()
 
     # create rabbits
-    for _ in range(2):
+    for _ in range(args.initial_rabbits):
         field.add_animal(Animal(2, max_offspring=2, speed=1, starve=0, eats=(1,)))
 
     # create foxes
-    for _ in range(5):
-        field.add_animal(Animal(3, max_offspring=1, speed=2, starve=30, eats=(2,)))
+    for _ in range(args.initial_foxes):
+        field.add_animal(Animal(3, max_offspring=1, speed=2, starve=args.fox_k_value, eats=(2,)))
 
     clist = ['tan','green', 'blue', 'red']
     my_cmap = colors.ListedColormap(clist)

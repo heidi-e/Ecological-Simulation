@@ -4,8 +4,6 @@ DS3500 HW 5
 Evolution Animation
 """
 
-
-
 import random as rnd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -206,7 +204,7 @@ class Field:
             print(val,":", len(self.animals[val]))
             # Capture field state for historical tracking
 
-        self.history[1].append(self.num_animals(val))
+        self.history[1].append(self.amount_of_grass())
 
 
         for val in ITEM[2:]:
@@ -222,7 +220,7 @@ class Field:
 
     def get_animals(self, val):
 
-        all_animals = np.ones(shape=(SIZE, SIZE), dtype=int)
+        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
 
         for animal in self.animals[val]:
             all_animals[animal.x, animal.y] = val
@@ -328,12 +326,12 @@ def main():
     field = Field()
 
     # create rabbits
-    for _ in range(3):
+    for _ in range(2):
         field.add_animal(Animal(2, max_offspring=2, speed=1, starve=0, eats=(1,)))
 
     # create foxes
-    for _ in range(1):
-        field.add_animal(Animal(3, max_offspring=1, speed=2, starve=10, eats=(2,)))
+    for _ in range(10):
+        field.add_animal(Animal(3, max_offspring=1, speed=2, starve=30, eats=(2,)))
 
     clist = ['tan','green', 'blue', 'red']
     my_cmap = colors.ListedColormap(clist)

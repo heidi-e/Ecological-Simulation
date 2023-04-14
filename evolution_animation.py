@@ -16,7 +16,7 @@ from collections import defaultdict
 import matplotlib.colors as colors
 import pprint as pp
 
-SIZE = 50  # The dimensions of the field
+SIZE = 15  # The dimensions of the field
 R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
@@ -60,11 +60,18 @@ class Animal:
     def eat(self, amount):
         """ Feed the animal some grass """
 
+
         self.eaten += amount
 
-        # keep track of how many times animal last ate
-        if self.eaten == 0:
+        if amount == 0:
+            #print("didn't eat at all")
             self.last_eaten += 1
+        else:
+            pass
+            #print("We eating good")
+
+        # keep track of how many times animal last ate
+
 
     def move(self):
         """ Move up, down, left, right randomly """
@@ -72,7 +79,7 @@ class Animal:
         if WRAP:
             self.x = (self.x + rnd.choice([-self.speed, self.speed])) % SIZE
             self.y = (self.y + rnd.choice([-self.speed, self.speed])) % SIZE
-            print("Heyyyy")
+
         else:
             self.x = min(SIZE - 1, max(0, (self.x + rnd.choice([-self.speed, self.speed]))))
             self.y = min(SIZE - 1, max(0, (self.y + rnd.choice([-self.speed, self.speed]))))
@@ -116,16 +123,20 @@ class Field:
 
 
         for animal in self.animals[2]:
+
             if self.field[animal.x, animal.y] == animal.eats[0]:
                 animal.eat(self.field[animal.x, animal.y])
                 self.field[animal.x, animal.y] = 0
+            else:
+                animal.eat(self.field[animal.x, animal.y])
 
     # account for foxes eating habits
             for fox in self.animals[3]:
                 if (fox.x == animal.x) and (fox.y == animal.y):
                     fox.eat(1)
                     animal.dead = True
-                    break
+                else:
+                    fox.eat(0)
 
 
     def survive(self):
@@ -140,22 +151,21 @@ class Field:
 
         born = []
         for val in ITEM[2:]:
-            print(val)
-            print(len(self.animals[val]))
+
+
             for animal in self.animals[val]:
-                print("Hello",val)
-                print(f"last eaten {animal.last_eaten}")
-                print(f"starve {animal.starve}")
+
                 if animal.last_eaten <= animal.starve:
                     # check if animal has eaten in the current cycle
                     if animal.eaten > 0:
                         for _ in range(rnd.randint(1, animal.max_offspring)):
-                            print("did reproduce!")
+
                             born.append(animal.reproduce())
                     else:
-                        print("Animal did not reproduce because it did not eat.")
+
+                        pass
                 else:
-                    print("Animal did not reproduce because it is starving.")
+                    pass
 
             self.animals[val] += born
             born = []  # reset the list for the next animal type
@@ -173,7 +183,7 @@ class Field:
         self.field = np.maximum(self.field, growloc)
 
     def get_animals(self):
-        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        all_animals = self.field
 
 
         #print(all_animals)
@@ -185,7 +195,7 @@ class Field:
 
                 all_animals[r.x, r.y] = val
 
-        print(all_animals)
+        print(f"Get_anmials one", all_animals)
         return all_animals
 
     def num_animals(self):
@@ -200,7 +210,7 @@ class Field:
         """ Run one generation of rabbits """
         #print(all_animals)
         #print("before we move")
-        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        all_animals = self.field
 
         #print(all_animals)
 
@@ -214,7 +224,7 @@ class Field:
         print(all_animals)
         self.move()
         print("before we eat")
-        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        all_animals = self.field
 
         #print(all_animals)
 
@@ -227,7 +237,7 @@ class Field:
         print(all_animals)
         self.eat()
         print("before we survive")
-        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        all_animals = self.field
 
         #print(all_animals)
 
@@ -240,7 +250,7 @@ class Field:
         print(all_animals)
         self.survive()
         print("before we reproduce")
-        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        all_animals = self.field
 
         #print(all_animals)
 
@@ -253,7 +263,7 @@ class Field:
         print(all_animals)
         self.reproduce()
         print("before we grow")
-        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        all_animals = self.field
 
         #print(all_animals)
 
@@ -266,7 +276,7 @@ class Field:
         print(all_animals)
         self.grow()
         print("final thing")
-        all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        all_animals = self.field
 
         #print(all_animals)
 
@@ -336,11 +346,11 @@ def main():
     field = Field()
 
     # create rabbits
-    for _ in range(10):
+    for _ in range(3):
         field.add_animal(Animal(2, max_offspring=2, speed=1, starve=0, eats=(1,)))
 
     # create foxes
-    for _ in range(3):
+    for _ in range(1):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=10, eats=(2,)))
 
     clist = ['black','green', 'blue', 'red']

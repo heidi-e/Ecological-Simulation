@@ -5,11 +5,12 @@ import numpy as np
 import copy
 import seaborn as sns
 
-SIZE = 500  # The dimensions of the field
+SIZE = 50  # The dimensions of the field
 OFFSPRING = 2  # Max offspring offspring when a rabbit reproduces
-GRASS_RATE = 0.025  # Probability that grass grows back at any location in the next season.
+GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
-
+from collections import defaultdict
+import matplotlib.colors as colors
 
 class Rabbit:
     """ A furry creature roaming a field in search of grass to eat.
@@ -18,7 +19,9 @@ class Rabbit:
     def __init__(self):
         self.x = rnd.randrange(0, SIZE)
         self.y = rnd.randrange(0, SIZE)
+
         self.eaten = 0
+        self.last_eaten = 0
 
         self.dead = False
 
@@ -33,15 +36,20 @@ class Rabbit:
         """ Feed the rabbit some grass """
         self.eaten += amount
 
+        if amount == 0:
+            self.last_eaten += 1
+        else:
+            self.last_eaten = 0
+
     def move(self):
         """ Move up, down, left, right randomly """
 
         if WRAP:
-            self.x = (self.x + rnd.choice([-1, 0, 1])) % SIZE
-            self.y = (self.y + rnd.choice([-1, 0, 1])) % SIZE
+            self.x = (self.x + rnd.choice([-1, 1])) % SIZE
+            self.y = (self.y + rnd.choice([-1, 1])) % SIZE
         else:
-            self.x = min(SIZE - 1, max(0, (self.x + rnd.choice([-1, 0, 1]))))
-            self.y = min(SIZE - 1, max(0, (self.y + rnd.choice([-1, 0, 1]))))
+            self.x = min(SIZE - 1, max(0, (self.x + rnd.choice([-1, 1]))))
+            self.y = min(SIZE - 1, max(0, (self.y + rnd.choice([-1, 1]))))
 
 class Fox:
     """ A furry creature roaming a field in search of grass to eat.
@@ -51,8 +59,9 @@ class Fox:
         self.x = rnd.randrange(0, SIZE)
         self.y = rnd.randrange(0, SIZE)
         self.eaten = 0
-
+        self.last_eaten = 0
         self.dead = False
+        self.last_eaten = 0
 
     def reproduce(self):
         """ Make a new rabbit at the same location.
@@ -65,15 +74,20 @@ class Fox:
         """ Feed the rabbit some grass """
         self.eaten += amount
 
+        if amount == 0:
+            self.last_eaten += 1
+        else:
+            self.last_eaten = 0
+
     def move(self):
         """ Move up, down, left, right randomly """
 
         if WRAP:
-            self.x = (self.x + rnd.choice([-1, 0, 1])) % SIZE
-            self.y = (self.y + rnd.choice([-1, 0, 1])) % SIZE
+            self.x = (self.x + rnd.choice([-2, 2])) % SIZE
+            self.y = (self.y + rnd.choice([-2, 2])) % SIZE
         else:
-            self.x = min(SIZE - 1, max(0, (self.x + rnd.choice([-1, 0, 1]))))
-            self.y = min(SIZE - 1, max(0, (self.y + rnd.choice([-1, 0, 1]))))
+            self.x = min(SIZE - 1, max(0, (self.x + rnd.choice([-2, 2]))))
+            self.y = min(SIZE - 1, max(0, (self.y + rnd.choice([-2, 2]))))
 
 class Field:
     """ A field is a patch of grass with 0 or more rabbits hopping around
@@ -115,24 +129,34 @@ class Field:
                 if (fox.x == rabbit.x) and (fox.y == rabbit.y):
                     fox.eat(1)
                     rabbit.dead = True
-                    break
+
+                else:
+                    fox.eat(0)
+
 
     def survive(self):
         """ Rabbits who eat some grass live to eat another day """
-        self.rabbits = [r for r in self.rabbits if r.eaten > 0 and not r.dead]
-        self.foxes = [a for a in self.foxes if (a.eaten <= 10) and not a.dead]
+        self.rabbits = [r for r in self.rabbits if r.last_eaten == 0 and not r.dead]
+        self.foxes = [a for a in self.foxes if (a.last_eaten <= 10) and not a.dead]
 
     def reproduce(self):
         """ Rabbits reproduce like rabbits. """
         born = []
         for rabbit in self.rabbits:
-            for _ in range(rnd.randint(1, OFFSPRING)):
-                born.append(rabbit.reproduce())
+            if rabbit.last_eaten == 0:
+                for _ in range(rnd.randint(1, OFFSPRING)):
+                    born.append(rabbit.reproduce())
         self.rabbits += born
 
-        born
+        born_f = []
+        for fox in self.foxes:
+            if fox.last_eaten == 0:
+                for _ in range(rnd.randint(1, 1)):
+                    born_f.append(fox.reproduce())
+        self.foxes += born_f
         # Capture field state for historical tracking
         self.nrabbits.append(self.num_rabbits())
+        self.nfoxes.append(self.num_foxes())
         self.ngrass.append(self.amount_of_grass())
 
     def grow(self):
@@ -143,12 +167,22 @@ class Field:
     def get_rabbits(self):
         rabbits = np.zeros(shape=(SIZE, SIZE), dtype=int)
         for r in self.rabbits:
-            rabbits[r.x, r.y] = 1
+            rabbits[r.x, r.y] = 2
         return rabbits
+
+    def get_foxes(self):
+        foxes = np.zeros(shape=(SIZE, SIZE), dtype=int)
+        for r in self.foxes:
+            foxes[r.x, r.y] = 3
+        return foxes
 
     def num_rabbits(self):
         """ How many rabbits are there in the field ? """
         return len(self.rabbits)
+
+    def num_foxes(self):
+        """ How many rabbits are there in the field ? """
+        return len(self.foxes)
 
     def amount_of_grass(self):
         return self.field.sum()
@@ -213,7 +247,8 @@ class Field:
 def animate(i, field, im):
     field.generation()
     # print("AFTER: ", i, np.sum(field.field), len(field.rabbits))
-    im.set_array(field.field)
+    im.set_array(field.get_rabbits())
+    im.set_array(field.get_foxes())
     plt.title("generation = " + str(i))
     return im,
 
@@ -222,12 +257,18 @@ def main():
     # Create the ecosystem
     field = Field()
 
-    for _ in range(1):
+    for _ in range(10):
         field.add_rabbit(Rabbit())
+        field.add_fox(Fox())
+
+    clist = ['black', 'green', 'blue', 'red']
+    my_cmap = colors.ListedColormap(clist)
+
+
 
     array = np.ones(shape=(SIZE, SIZE), dtype=int)
     fig = plt.figure(figsize=(5, 5))
-    im = plt.imshow(array, cmap='PiYG', interpolation='hamming', aspect='auto', vmin=0, vmax=1)
+    im = plt.imshow(array, cmap=my_cmap, interpolation='none', aspect='auto', vmin=0, vmax=1)
     anim = animation.FuncAnimation(fig, animate, fargs=(field, im,), frames=1000000, interval=1, repeat=True)
     plt.show()
 

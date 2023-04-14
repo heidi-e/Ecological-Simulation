@@ -21,6 +21,7 @@ R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
 ITEM = [0,1,2,3]
+TYPE = ['empty', 'grass', 'rabbit', 'fox']
 SPEED = 1
 
 
@@ -36,8 +37,8 @@ SPEED = 1
 class Animal:
     """ Rabbits and foxes in a field of grass """
 
-    def __init__(self, kind, max_offspring, speed, starve, eats):
-        self.kind = kind
+    def __init__(self, val, max_offspring, speed, starve, eats):
+        self.val = val
         self.max_offspring = max_offspring
         self.speed = speed
         self.starve = starve # how many cycles they can last before dying
@@ -84,6 +85,8 @@ class Animal:
             self.y = min(SIZE - 1, max(0, (self.y + rnd.choice([-self.speed, self.speed]))))
 
 
+    def __repr__(self):
+        return(TYPE[self.val])
 
 
 class Field:
@@ -101,7 +104,7 @@ class Field:
 
     def add_animal(self, animal):
         """ A new animal is added to the field """
-        self.animals[animal.kind].append(animal)
+        self.animals[animal.val].append(animal)
 
 
     def move(self):
@@ -203,7 +206,7 @@ class Field:
             print(val,":", len(self.animals[val]))
             # Capture field state for historical tracking
 
-        self.history[1].append(self.num_animals())
+        self.history[1].append(self.num_animals(val))
 
 
         for val in ITEM[2:]:
@@ -241,10 +244,9 @@ class Field:
 
         return all_animals"""
 
-    def num_animals(self):
+    def num_animals(self, val):
         """ How many rabbits are there in the field ? """
-        for val in ITEM[2:]:
-            return len(self.animals[val])
+        return len(self.animals[val])
 
     def amount_of_grass(self):
         return self.field.sum()

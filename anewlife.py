@@ -247,8 +247,7 @@ class Field:
 def animate(i, field, im):
     field.generation()
     # print("AFTER: ", i, np.sum(field.field), len(field.rabbits))
-    im.set_array(field.get_rabbits())
-    im.set_array(field.get_foxes())
+    im.set_array(field.field)
     plt.title("generation = " + str(i))
     return im,
 

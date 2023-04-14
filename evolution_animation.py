@@ -21,6 +21,7 @@ R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = 0.8  # Probability that grass grows back at any location in the next season.
 WRAP = False  # Does the field wrap around on itself when rabbits move?
 ITEM = [0,1,2,3]
+SPEED = 1
 
 
 # parameters
@@ -60,11 +61,9 @@ class Animal:
     def eat(self, amount):
         """ Feed the animal some grass """
 
-
         self.eaten += amount
 
         if amount == 0:
-
             self.last_eaten += 1
         else:
             self.last_eaten = 0
@@ -112,30 +111,68 @@ class Field:
                 r.move()
 
 
+    def update_location_field(self):
+        """Updates location of field"""
+        self.coordinates.clear()
+        for val in ITEM[2:]:
+            for animal in self.animals[val]:
+                self.coordinates[(animal.x, animal.y)].append(animal)
+
+        for val in ITEM[2:]:
+            self.location[val] = self.get_animals(val)
+
+
+
 
     def eat(self):
         """ Rabbits eat grass (if they find grass where they are),
         foxes eat rabbits (if they find rabbits where they are) """
 
 
+        self.update_location_field()
+
+        for val in ITEM[2:]:
+            for animal in self.animals[val]:
+                for prey in animal.eats:
+                    if prey == 1:
+                        animal.eat(self.field[animal.x, animal.y])
+                        self.field[animal.x, animal.y] = 0
+                    else:
+                        # for every other animal at the same location, check whether it can be eaten
+                        ate = False
+                        for other in self.coordinates[animal.x, animal.y]:
+                            if other.val in animal.eats:
+                                animal.eat(1)
+                                ate = True
+                                other.dead = True
+                        if not ate:
+                            animal.eat(0)
+
+
+        """
+        # account for rabbits eating habits
         for animal in self.animals[2]:
 
+            # check if field has grass
             if self.field[animal.x, animal.y] == animal.eats[0]:
+
                 animal.eat(self.field[animal.x, animal.y])
                 print('rabbits are munching')
                 self.field[animal.x, animal.y] = 0
 
             else:
-                animal.eat(self.field[animal.x, animal.y])
+                # rabbit has nothing to eat
+                animal.eat(0)
                 animal.dead = True
 
     # account for foxes eating habits
             for fox in self.animals[3]:
+                # check if fox is on a rabbit
                 if (fox.x == animal.x) and (fox.y == animal.y):
                     fox.eat(1)
                     animal.dead = True
                 else:
-                    fox.eat(0)
+                    fox.eat(0)"""
 
 
     def survive(self):
@@ -150,22 +187,27 @@ class Field:
     def reproduce(self):
         """ Rabbits reproduce like rabbits. """
 
-        born = []
+
         for val in ITEM[2:]:
+            born = []
             for animal in self.animals[val]:
 
-                if animal.last_eaten <= animal.starve:
+                #if animal.last_eaten <= animal.starve:
                     # check if animal has eaten in the current cycle
-                    if animal.eaten > 0:
-                        for _ in range(rnd.randint(1, animal.max_offspring)):
-                            born.append(animal.reproduce())
+                if animal.eaten > 0:
+                    for _ in range(rnd.randint(1, animal.max_offspring)):
+                        born.append(animal.reproduce())
 
             self.animals[val] += born
-            born = []  # reset the list for the next animal type
+            #born = []  reset the list for the next animal type
             print(val,":", len(self.animals[val]))
             # Capture field state for historical tracking
-            self.history[val].append(self.num_animals())
 
+        self.history[1].append(self.num_animals())
+
+
+        for val in ITEM[2:]:
+            self.history[val].append(self.num_animals(val))
 
             # Capture field state for historical tracking
             #self.nrabbits.append(self.num_rabbits())
@@ -175,9 +217,17 @@ class Field:
         growloc = (np.random.rand(SIZE, SIZE) < GRASS_RATE) * 1
         self.field = np.maximum(self.field, growloc)
 
-    def get_animals(self):
+    def get_animals(self, val):
+
         all_animals = np.ones(shape=(SIZE, SIZE), dtype=int)
 
+        for animal in self.animals[val]:
+            all_animals[animal.x, animal.y] = val
+
+        return all_animals
+
+        """all_animals = self.field
+        #all_animals = np.ones(shape=(SIZE, SIZE), dtype=int)
 
         #print(all_animals)
 
@@ -189,7 +239,7 @@ class Field:
                 all_animals[r.x, r.y] = val
 
 
-        return all_animals
+        return all_animals"""
 
     def num_animals(self):
         """ How many rabbits are there in the field ? """
@@ -199,16 +249,17 @@ class Field:
     def amount_of_grass(self):
         return self.field.sum()
 
-    def generation(self):
+    def generation(self, speed):
         """ Run one generation of rabbits """
         #print(all_animals)
         #print("before we move")
 
-        self.move()
-        self.eat()
-        self.survive()
-        self.reproduce()
-        self.grow()
+        for s in range(speed):
+            self.move()
+            self.eat()
+            self.survive()
+            self.reproduce()
+            self.grow()
 
     def history(self, showTrack=True, showPercentage=True, marker='.'):
         plt.figure(figsize=(6, 6))
@@ -254,12 +305,18 @@ class Field:
 """
 
 def animate(i, field, im):
-    field.generation()
+
+    field.generation(SPEED)
+    total_field = field.field
+
+    for val in ITEM[2:]:
+        total_field = np.maximum(total_field, field.location[val])
+
     # print("AFTER: ", i, np.sum(field.field), len(field.rabbits))
-    x = field.get_animals()
+    #x = field.get_animals()
     #print(x)
-    im.set_array(x)
-    plt.title("generation = " + str(i))
+    im.set_array(total_field)
+    plt.title("generation = " + str(i * SPEED))
     return im,
 
 

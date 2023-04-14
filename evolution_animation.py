@@ -67,7 +67,7 @@ class Animal:
             #print("didn't eat at all")
             self.last_eaten += 1
         else:
-            pass
+            self.last_eaten = 0
             #print("We eating good")
 
         # keep track of how many times animal last ate
@@ -128,6 +128,7 @@ class Field:
                 animal.eat(self.field[animal.x, animal.y])
                 self.field[animal.x, animal.y] = 0
             else:
+                print("didn;t eat this time!")
                 animal.eat(self.field[animal.x, animal.y])
 
     # account for foxes eating habits
@@ -136,6 +137,7 @@ class Field:
                     fox.eat(1)
                     animal.dead = True
                 else:
+                    print("didn;t eat this time! FOX")
                     fox.eat(0)
 
 
@@ -143,6 +145,8 @@ class Field:
         """ Rabbits who eat some grass live to eat another day """
 
         for val in ITEM[2:]:
+            #for a in self.animals[val]:
+                #print(f"last eaten{a.last_eaten}")
             self.animals[val] = [a for a in self.animals[val] if (a.last_eaten <= a.starve) and not a.dead]
 
 

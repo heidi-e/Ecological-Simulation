@@ -1,7 +1,9 @@
 """
 Heidi Eren, Conor Doyle, Olivia Mintz, Kelsey Nihezagirwe
 DS3500 HW 5
-Evolution Animation
+4/14/23
+Evolution_animation.py
+
 """
 
 import random as rnd
@@ -13,78 +15,81 @@ import seaborn as sns
 from collections import defaultdict
 import matplotlib.colors as colors
 import argparse
-import pprint as pp
 
 parser = argparse.ArgumentParser(description='Simulate a rabbit and fox population over time.')
 parser.add_argument('--grass_growth_rate', type=float, default=0.8, help='the rate at which grass grows each turn')
-parser.add_argument('--fox_k_value', type=float, default=30, help='the K value for foxes')
+parser.add_argument('--fox_k_value', type=int, default=10, help='the number of cycles the fox can go without eating')
 parser.add_argument('--field_size', type=int, default=50, help='the size of the field')
-parser.add_argument('--initial_rabbits', type=int, default=2, help='the number of rabbits at the start of the simulation')
-parser.add_argument('--initial_foxes', type=int, default=5, help='the number of foxes at the start of the simulation')
+parser.add_argument('--initial_rabbits', type=int, default=5, help='the number of rabbits at the start of the simulation')
+parser.add_argument('--initial_foxes', type=int, default=2, help='the number of foxes at the start of the simulation')
 
 args = parser.parse_args()
 
+# set global variables
 SIZE = args.field_size  # The dimensions of the field
-R_OFFSPRING = 2  # Max offspring when a rabbit reproduces
 GRASS_RATE = args.grass_growth_rate  # Probability that grass grows back at any location in the next season.
-WRAP = False  # Does the field wrap around on itself when rabbits move?
-ITEM = [0,1,2,3]
+WRAP = False  # The field wrap around on itself when the animals move
+ITEM = [0,1,2,3] # Kind for each animal
 TYPE = ['empty', 'grass', 'rabbit', 'fox']
-SPEED = 1
-
-WHOLE_FIELD = []
-
-# parameters
-# max_offspring, speed, how long they go without eating, what the animal can eat
-# give each food
-# to differentiate between animals == what it eats, choose a number to corresponding to what it eats
-# the number is a value in the init
-# frames is the k
-# if it equals this number, change this
+SPEED = 1 # Set speed of generation animation
 
 
 class Animal:
-    """ Rabbits and foxes in a field of grass """
+    """ Animal class that represents either a rabbit or fox on a field of grass
 
-    def __init__(self, val, max_offspring, speed, starve, eats):
-        self.val = val
+     Attributes:
+         kind (int): the number assigned to the animal
+         max_offspring (int): the maximum number of offspring an animal can have
+         speed (int): the speed at which the animal is moving
+         starve (int): the number of cycles an animal can last before dying
+         eats (int): what animal they eat
+
+         x (int): x coordinate of animal
+         y (int): y coordinate of animal
+         eaten (int): an amount that increases if the animal eats
+         last_eaten (int): the number of generations since the last ate
+         dead (bool): true if the animal is dead, false if the animal is alive"""
+
+    def __init__(self, kind, max_offspring, speed, starve, eats):
+        self.kind = kind
         self.max_offspring = max_offspring
         self.speed = speed
-        self.starve = starve # how many cycles they can last before dying
-        self.eats = eats # what animal they eat
+        self.starve = starve
+        self.eats = eats
 
         # initialize location of animal
         self.x = rnd.randrange(0, SIZE)
         self.y = rnd.randrange(0, SIZE)
+
+        # set eating status of animal
         self.eaten = 0
-        self.last_eaten = 0 # number of generations since the last animal ate
+        self.last_eaten = 0
         self.dead = False
 
     def reproduce(self):
-        """ Make a new rabbit at the same location.
-         Reproduction is hard work! Each reproducing
-         rabbit's eaten level is reset to zero. """
+        """ Reproduce the animal at the same location;
+        each reproduced animal's eating level is reset to zero """
 
         self.eaten = 0
         return copy.deepcopy(self)
 
     def eat(self, amount):
-        """ Feed the animal some grass """
+        """ Have the animal eat when possible
+         amount (int): the value of whether the animal ate """
 
+        # update eaten to the amount eaten
         self.eaten += amount
 
+        # if animal didn't eat, update last_eaten
         if amount == 0:
             self.last_eaten += 1
         else:
             self.last_eaten = 0
 
-
-        # keep track of how many times animal last ate
-
-
     def move(self):
         """ Move up, down, left, right randomly """
 
+        # if field wraps around itself
         if WRAP:
             self.x = (self.x + rnd.choice([-self.speed, self.speed])) % SIZE
             self.y = (self.y + rnd.choice([-self.speed, self.speed])) % SIZE
@@ -93,10 +98,8 @@ class Animal:
             self.x = min(SIZE - 1, max(0, (self.x + rnd.choice([-self.speed, self.speed]))))
             self.y = min(SIZE - 1, max(0, (self.y + rnd.choice([-self.speed, self.speed]))))
 
-
     def __repr__(self):
-        return(TYPE[self.val])
-
+        return(TYPE[self.kind])
 
 class Field:
     """ A field is a patch of grass with 0 or more animals walking around """
@@ -112,9 +115,10 @@ class Field:
         self.coordinates = defaultdict(list)
 
     def add_animal(self, animal):
-        """ A new animal is added to the field """
-        self.animals[animal.val].append(animal)
+        """ A new animal is added to the field
+         animal (lst): user-inputted parameters associated with the animal """
 
+        self.animals[animal.kind].append(animal)
 
     def move(self):
         """ Move the animal """
@@ -124,37 +128,53 @@ class Field:
 
 
     def update_location_field(self):
-        """Updates location of field"""
+        """Updates the location of field for historical tracking """
+
         self.coordinates.clear()
+
         for val in ITEM[2:]:
             for animal in self.animals[val]:
+
+                # record coordinates of animal into global variable
                 self.coordinates[(animal.x, animal.y)].append(animal)
 
         for val in ITEM[2:]:
+
+            # record location of animal
             self.location[val] = self.get_animals(val)
 
 
     def eat(self):
-        """ Rabbits eat grass (if they find grass where they are),
+        """ Have the animal eat based on certain conditions;
+        Rabbits eat grass (if they find grass where they are),
         foxes eat rabbits (if they find rabbits where they are) """
-
 
         self.update_location_field()
 
         for val in ITEM[2:]:
             for animal in self.animals[val]:
+
+                # loop through what the animal eats
                 for prey in animal.eats:
+
+                    # check for grass-eaters, updates the animal's eat, and empty the field location
                     if prey == 1:
                         animal.eat(self.field[animal.x, animal.y])
                         self.field[animal.x, animal.y] = 0
+
                     else:
-                        # for every other animal at the same location, check whether it can be eaten
+                        # animal did not eat
                         ate = False
+
+                        # for every other animal at the same location, check whether it can be eaten
                         for other in self.coordinates[animal.x, animal.y]:
-                            if other.val in animal.eats:
+                            if other.kind in animal.eats:
                                 animal.eat(1)
                                 ate = True
+
+                                # animal on the same coordinates dies
                                 other.dead = True
+                        # animal did not eat
                         if not ate:
                             animal.eat(0)
 
@@ -217,13 +237,11 @@ class Field:
         # update the amount of grass in the field
         self.history[1].append(self.amount_of_grass())
 
-        # update the number of animals in the field
         for val in ITEM[2:]:
+
+            # update the number of animals in the field
             self.history[val].append(self.num_animals(val))
 
-            # Capture field state for historical tracking
-            #self.nrabbits.append(self.num_rabbits())
-            #self.ngrass.append(self.amount_of_grass())
     def grow(self):
         """ Grass grows back with some probability """
         growloc = (np.random.rand(SIZE, SIZE) < GRASS_RATE) * 1
@@ -234,36 +252,23 @@ class Field:
         all_animals = np.zeros(shape=(SIZE, SIZE), dtype=int)
 
         for animal in self.animals[val]:
+            # update the animal's location on the field
             all_animals[animal.x, animal.y] = val
 
         return all_animals
 
-        """all_animals = self.field
-        #all_animals = np.ones(shape=(SIZE, SIZE), dtype=int)
-
-        #print(all_animals)
-
-        #pp.pprint(self.animals)
-
-        for val in ITEM[2:]:
-            for r in self.animals[val]:
-
-                all_animals[r.x, r.y] = val
-
-
-        return all_animals"""
-
     def num_animals(self, val):
-        """ How many rabbits are there in the field ? """
+        """ number of animals in the field
+        val (int): kind of the animal """
+
         return len(self.animals[val])
 
     def amount_of_grass(self):
         return self.field.sum()
 
     def generation(self, speed):
-        """ Run one generation of rabbits """
-        #print(all_animals)
-        #print("before we move")
+        """ Run one generation of animals
+        speed (int): value that increases the speed of the generations (global variable)"""
 
         for s in range(speed):
             self.move()
@@ -272,60 +277,13 @@ class Field:
             self.reproduce()
             self.grow()
 
-    def history_graph(self, showTrack=True, showPercentage=True, marker='.'):
-
-        rabbit_count = []
-        fox_count = []
-        grass_count = []
-        empty_count = []
-
-        for k in range(len(self.history)):
-            rabbit_count.append(self.history[k][2])
-            fox_count.append(self.history[k][3])
-            grass_count.append(self.history[k][1])
-            empty_count.append(SIZE ** 2 - sum(self.history[k][1:]) - rabbit_count[k] - fox_count[k])
-
-        plt.plot(rabbit_count, label='Rabbits')
-        plt.plot(fox_count, label='Foxes')
-        plt.plot(grass_count, label='Grass')
-        plt.plot(empty_count, label='Empty')
-
-        plt.legend()
-        plt.xlabel('Time')
-        plt.ylabel('Number of animals/spaces')
-        plt.title('Population dynamics over time')
-        plt.show()
-
-
-        plt.figure(figsize=(6, 6))
-        plt.xlabel("generation #")
-        plt.ylabel("% population")
-        for val in ITEM[2:]:
-            for animal in self.history[val]:
-                xs = animal[:]
-                if showPercentage:
-                    max_animal = max(xs)
-                    xs = [x / max_animal for x in xs]
-                    plt.xlabel("generation #")
-
-        ys = self.history[1]
-        if showPercentage:
-            maxgrass = max(ys)
-            ys = [y / maxgrass for y in ys]
-            plt.ylabel("% population")
-
-        if showTrack:
-            plt.plot(xs, ys, marker=marker)
-        else:
-            plt.scatter(xs, ys, marker=marker)
-        plt.grid()
-        plt.title("Animals vs. Grass: GROW_RATE =" + str(GRASS_RATE))
-        plt.legend(TYPE)
-        plt.savefig("history.png", bbox_inches='tight')
-        plt.show()
     def history1(self, showTrack=True, showPercentage=True, marker='.'):
+        """ Plots the history of the field
+         showTrack (bool): Have graph track num of populations (display line graph)
+         showPercentage (bool): Have graph display percent of animal population
+         marker (str): marker on graph """
 
-
+        # list of number of animals in each generation
         nrabbits = self.history[2]
         nfoxes = self.history[3]
         ngrass = self.history[1]
@@ -364,34 +322,14 @@ class Field:
 
         plt.title("Rabbits vs. Foxes: GROW_RATE =" + str(GRASS_RATE))
         plt.legend()
-        plt.savefig("history.png", bbox_inches='tight')
+        plt.savefig("history1.png", bbox_inches='tight')
         plt.show()
 
+    def history2(self, showPercentage=True):
+        """ Plots the population of rabbits, foxes, and grass over time
+         showPercentage (bool): Have graph display percent of animal population """
 
-    def history2(self):
-
-        xs = self.history[2]
-        ys = self.history[1]
-        zs = self.history[3]
-
-        sns.set_style('dark')
-        f, ax = plt.subplots(figsize=(7, 6))
-        sns.scatterplot(x=xs, y=ys, s=5, color=".15", label="Grass")
-        sns.histplot(x=xs, y=ys, bins=50, pthresh=.1, cmap="mako")
-        sns.kdeplot(x=xs, y=ys, levels=5, color="r", linewidths=1, label="Rabbits")
-        sns.scatterplot(x=xs, y=zs, s=5, color="b", label="Foxes")
-        plt.grid()
-        plt.xlim(0, max(xs) * 1.2)
-        plt.xlabel("# Rabbits/Foxes")
-        plt.ylabel("# Grass")
-        plt.title("Rabbits and Foxes vs. Grass: GROW_RATE =" + str(GRASS_RATE))
-        plt.legend(loc="upper left")
-        plt.savefig("history2.png", bbox_inches='tight')
-        plt.show()
-
-    def plot_populations(self, showPercentage=True):
-        """ Plots the population of rabbits, foxes, and grass over time """
-
+        # list of number of animals in each generation
         rabbits = self.history[2]
         grass = self.history[1]
         foxes = self.history[3]
@@ -401,30 +339,25 @@ class Field:
         if showPercentage:
             maxrabbit = max(xs)
             xs = [x / maxrabbit for x in xs]
-            # plot the lines
             plt.plot(time, xs, label='rabbit')
 
         ys = grass[:]
         if showPercentage:
             maxgrass = max(ys)
             ys = [x / maxgrass for x in ys]
-            # plot the lines
             plt.plot(time, ys, label='grass')
 
         zs = foxes[:]
         if showPercentage:
             maxfoxes = max(zs)
             zs = [x / maxfoxes for x in zs]
-            # plot the lines
             plt.plot(time, zs, label='foxes')
 
 
         # add title and labels for axes
-        plt.title('Three Lines')
-        plt.xlabel('X-axis')
-        plt.ylabel('Y-axis')
-
-        # add legend and show the plot
+        plt.title('Population of Rabbits, Foxes and Grass Over Time')
+        plt.xlabel('Number of Generations')
+        plt.ylabel('% Population')
         plt.legend()
         plt.show()
 
@@ -432,13 +365,10 @@ def animate(i, field, im):
 
     field.generation(SPEED)
     total_field = field.field
-
     for val in ITEM[2:]:
         total_field = np.maximum(total_field, field.location[val])
 
-    # print("AFTER: ", i, np.sum(field.field), len(field.rabbits))
-    #x = field.get_animals()
-    #print(x)
+    # set the field in the animation
     im.set_array(total_field)
     plt.title("generation = " + str(i * SPEED))
     return im,
@@ -457,6 +387,7 @@ def main():
     for _ in range(args.initial_foxes):
         field.add_animal(Animal(3, max_offspring=1, speed=2, starve=args.fox_k_value, eats=(2,)))
 
+    # set colors for field
     clist = ['tan','green', 'blue', 'red']
     my_cmap = colors.ListedColormap(clist)
 
@@ -469,40 +400,12 @@ def main():
     fig = plt.figure(figsize=(5, 5))
     im = plt.imshow(array, cmap=my_cmap, interpolation='None', aspect='auto', vmin=0, vmax=3)
     anim = animation.FuncAnimation(fig, animate, fargs=(field, im,), frames=1000000, interval=1, repeat=True)
-    #pp.pprint(field.array)
     plt.show()
 
-    pp.pprint(field.history)
+    # create graphs
     field.history1()
-
-    #field.history2()
-
-    field.plot_populations()
+    field.history2()
 
 
 if __name__ == '__main__':
     main()
-
-"""
-def main():
-    # Create the ecosystem
-    field = Field()
-    for _ in range(10):
-        field.add_rabbit(Rabbit())
-    # Run the world
-    gen = 0
-    while gen < 500:
-        field.display(gen)
-        if gen % 100 == 0:
-            print(gen, field.num_rabbits(), field.amount_of_grass())
-        field.move()
-        field.eat()
-        field.survive()
-        field.reproduce()
-        field.grow()
-        gen += 1
-    plt.show()
-    field.plot()
-if __name__ == '__main__':
-    main()
-"""

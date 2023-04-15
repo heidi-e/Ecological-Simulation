@@ -322,7 +322,7 @@ class Field:
 
         plt.title("Rabbits vs. Foxes: GROW_RATE =" + str(GRASS_RATE))
         plt.legend()
-        plt.savefig("history1.png", bbox_inches='tight')
+        plt.savefig("Animal_growth_rate.png", bbox_inches='tight')
         plt.show()
 
     def history2(self, showPercentage=True):
@@ -359,6 +359,7 @@ class Field:
         plt.xlabel('Number of Generations')
         plt.ylabel('% Population')
         plt.legend()
+        plt.savefig("Percent_change_in_population.png", bbox_inches='tight')
         plt.show()
 
 def animate(i, field, im):

@@ -2,7 +2,7 @@
 Heidi Eren, Conor Doyle, Olivia Mintz, Kelsey Nihezagirwe
 DS3500 HW 5
 4/14/23
-Evolution_animation.py
+Final_ecological_simulation.py
 
 """
 
@@ -20,8 +20,8 @@ parser = argparse.ArgumentParser(description='Simulate a rabbit and fox populati
 parser.add_argument('--grass_growth_rate', type=float, default=0.8, help='the rate at which grass grows each turn')
 parser.add_argument('--fox_k_value', type=int, default=10, help='the number of cycles the fox can go without eating')
 parser.add_argument('--field_size', type=int, default=50, help='the size of the field')
-parser.add_argument('--initial_rabbits', type=int, default=5, help='the number of rabbits at the start of the simulation')
-parser.add_argument('--initial_foxes', type=int, default=2, help='the number of foxes at the start of the simulation')
+parser.add_argument('--initial_rabbits', type=int, default=1, help='the number of rabbits at the start of the simulation')
+parser.add_argument('--initial_foxes', type=int, default=1, help='the number of foxes at the start of the simulation')
 
 args = parser.parse_args()
 

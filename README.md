@@ -7,7 +7,7 @@ This is a simulation project that models the interactions between two species, C
 
 ## Installation
 To run the simulation, you will need Python 3 and the following libraries:
-
+```
 NumPy
 Random
 Matplotlib.pyplot as plt
@@ -17,7 +17,7 @@ Copy
 From collections import defaultdict
 Matplotlib.colors as colors
 Argparse
-
+```
 ## Usage
 To start the simulation, simply run the final_ecological_simulation.py file:
 
